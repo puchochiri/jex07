@@ -21,6 +21,7 @@ import com.zaxxer.hikari.HikariDataSource;
 @ComponentScan(basePackages= {"org.zerock.sample"})
 @ComponentScan(basePackages= {"org.zerock.aop"})
 @ComponentScan(basePackages= {"org.zerock.task"})
+@ComponentScan(basePackages= {"org.zerock.security"})
 @EnableAspectJAutoProxy
 @EnableScheduling
 @EnableTransactionManagement
