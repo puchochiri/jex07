@@ -1,16 +1,24 @@
 package org.zerock.config;
 
+import javax.sql.DataSource;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
+import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
 import org.zerock.security.CustomLoginSuccessHandler;
+import org.zerock.security.CustomUserDetailsService;
 
+import lombok.Setter;
 import lombok.extern.log4j.Log4j;
 
 @Configuration
@@ -19,6 +27,23 @@ import lombok.extern.log4j.Log4j;
 @Log4j
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	
+	@Setter(onMethod_ = {@Autowired})
+	private DataSource dataSource;
+
+	@Bean
+	public UserDetailsService customUserService() {
+		return new CustomUserDetailsService();
+		
+	}
+	
+	// in custom userdetails
+	@Override
+	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+		auth.userDetailsService(customUserService()).passwordEncoder(passwordEncoder());
+		
+	}
+	
+/*	
 	@Override
 	public void configure(AuthenticationManagerBuilder auth) throws Exception {
 		
@@ -31,11 +56,16 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		auth.inMemoryAuthentication().withUser("member").password("$2a$10$q7SkjJnfeOPpzqBphyIK4.MwjD6pGKLUKHekgcLvUfKQBtuzMRBme").roles("MEMBER");
 		
 	}
+*/	
 	
 	@Bean
 	public AuthenticationSuccessHandler loginSuccessHandler() {
 		return new CustomLoginSuccessHandler();
 	}
+	
+	
+	
+
 	
 	@Override
 	public void configure(HttpSecurity http) throws Exception {
@@ -48,16 +78,48 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		// 로그인 페이지 이동
 		http.formLogin().loginPage("/customLogin").loginProcessingUrl("/login").successHandler(loginSuccessHandler());
 		http.logout().logoutUrl("/customLogout").invalidateHttpSession(true).deleteCookies("remember-me", "JSESSION_ID");
+		
+		// 자동로그인 설정
+		http.rememberMe().key("zerock").tokenRepository(persistentTokenRepository()).tokenValiditySeconds(604800);
+		
 	}
 	
-	
+	/*
+	@Override
+	protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+		log.info("configure JDBC..................................");
+		
+		String queryUser = "select userid, userpw, enabled from tbl_member where userid = ? ";
+		String queryDetails = "select userid, auth from tbl_member_auth where userid = ? ";
+		
+		auth.jdbcAuthentication()
+		.dataSource(dataSource)
+		.passwordEncoder(passwordEncoder())
+		.usersByUsernameQuery(queryUser)
+		.authoritiesByUsernameQuery(queryDetails);
+	}
+	*/
+
+
 	// PasswordEncoder
 	@Bean
 	public PasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder();
 		
 	}
+	
+	// 자동로그인 설정
+	@Bean
+	public PersistentTokenRepository persistentTokenRepository() {
+		JdbcTokenRepositoryImpl repo = new JdbcTokenRepositoryImpl();
+		repo.setDataSource(dataSource);
+		// TODO Auto-generated method stub
+		return repo;
+	}
 
+
+
+	
 }
 
 
