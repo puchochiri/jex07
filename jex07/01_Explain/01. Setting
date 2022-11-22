@@ -1,7 +1,5 @@
-integration test 20222308
-
 책이름 : 코드로 배우는 스프링 웹 프로젝트
-집컴퓨터
+
 1. 자바버전 : jdk1.8.0_261
 2. eclipse 버전 : eclipse-jee-2019-12-R-win32-x86_64
 3. spring tools 3 플러그인 추가 : Eclipse내 Help/MarketPlace
